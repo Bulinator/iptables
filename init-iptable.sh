@@ -97,15 +97,15 @@ iptables -t filter -A INPUT -p tcp --dport 30033 -j ACCEPT
 iptables -t filter -A OUTPUT -p tcp --dport 30033 -j ACCEPT
 
 # OpenVPN
+iptables -t nat -A POSTROUTING -o venet0 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o venet0 -j MASQUERADE
 # allow tcp connection on openvpn port
-iptables -A INPUT -i eth0 -m state --state NEW -p udp --dport 1194 -j ACCEPT
+iptables -A INPUT -i venet0 -m state --state NEW -p udp --dport 1194 -j ACCEPT
 # allow tun interface for openvpn
 iptables -A INPUT -i tun+ -j ACCEPT
 # Allow tun connection to be forwarded through other interface
 iptables -A FORWARD -i tun+ -j ACCEPT
-iptables -A FORWARD -i tun+ -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i eth0 -o tun+ -m state --state RELATED,ESTABLISHED -j ACCEPT
-# NAT the VPN client traffic to the Internet. change the ip address mask according to your info of tun0 result while running "ip a || ifconfig tun0" command.
-iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
+iptables -A FORWARD -i tun+ -o venet0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i venet0 -o tun+ -m state --state RELATED,ESTABLISHED -j ACCEPT
 # If your default iptables OUTPUT value is not ACCEPT, you will also need a line like
 # iptables -A OUTPUT -o tun+ -j ACCEPT
